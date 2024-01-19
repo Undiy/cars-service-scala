@@ -6,8 +6,9 @@
 # Cars
 GET     /cars                           controllers.CarsController.getAll
 GET     /cars/:id                       controllers.CarsController.getById(id: Long)
-
 POST    /cars                           controllers.CarsController.add
+PUT     /cars                           controllers.CarsController.update
+DELETE  /cars/:id                       controllers.CarsController.deleteById(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

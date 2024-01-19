@@ -2,7 +2,7 @@ package controllers
 
 import models.Car
 import play.api.libs.json.Json
-import play.api.mvc.{BaseController, ControllerComponents}
+import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 
 import javax.inject.{Inject, Singleton}
 import scala.collection.mutable.ListBuffer
@@ -26,10 +26,12 @@ class CarsController @Inject()(val controllerComponents: ControllerComponents)
     }
   }
 
+  private def getCarFromRequest(request: Request[AnyContent]) = request.body.asJson.flatMap(
+    Json.fromJson[Car](_).asOpt
+  )
+
   def add = Action { implicit request =>
-    request.body.asJson.flatMap(
-      Json.fromJson[Car](_).asOpt
-    ) match {
+    getCarFromRequest(request) match {
       case Some(newCar) =>
         val nextId = carsList.map(_.id).max + 1
         val toBeAdded = newCar.copy(id = nextId)
@@ -37,6 +39,29 @@ class CarsController @Inject()(val controllerComponents: ControllerComponents)
         Created(Json.toJson(nextId))
       case None =>
         BadRequest
+    }
+  }
+
+  def update = Action { implicit request =>
+    getCarFromRequest(request) flatMap { updatedCar: Car =>
+      val i = carsList.indexWhere(_.id == updatedCar.id)
+      if (i >= 0) Some((updatedCar, i)) else None
+    } match {
+      case Some((updatedCar, i)) =>
+        carsList(i) = updatedCar
+        NoContent
+      case None =>
+        BadRequest
+    }
+  }
+
+  def deleteById(id: Long) = Action {
+    val i = carsList.indexWhere(_.id == id)
+    if (i >= 0) {
+      carsList.remove(i)
+      NoContent
+    } else {
+      BadRequest
     }
   }
 }
