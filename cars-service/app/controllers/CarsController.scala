@@ -1,34 +1,28 @@
 package controllers
 
 import models.Car
-import play.api.libs.json.{JsNumber, JsObject, JsValue, Json}
-import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
+import play.api.libs.json.{JsNumber, JsObject, Json}
+import play.api.mvc.{BaseController, ControllerComponents}
+import repositories.CarRepository
 
-import javax.inject.{Inject, Singleton}
-import scala.collection.mutable.ListBuffer
+import javax.inject.Inject
 
-@Singleton
-class CarsController @Inject()(val controllerComponents: ControllerComponents)
+class CarsController @Inject() (
+                      val carRepository: CarRepository,
+                      val controllerComponents: ControllerComponents
+                    )
   extends BaseController {
 
-  private val carsList = new ListBuffer[Car]()
-  carsList += Car(1, "TEST_123")
-  carsList += Car(2, "TEST_123", make = Some("foo"), color = Some("green"), manufacturingYear = Some(2023))
-
   def getAll = Action {
-    Ok(Json.toJson(carsList))
+    Ok(Json.toJson(carRepository.findAll()))
   }
 
   def getById(id: Long) = Action {
-    carsList.find(_.id == id) match {
+    carRepository.getById(id) match {
       case Some(item) => Ok(Json.toJson(item))
       case None => NotFound
     }
   }
-
-  private def getCarFromRequest(request: Request[AnyContent]) = request.body.asJson.flatMap(
-    Json.fromJson[Car](_).asOpt
-  )
 
   def add = Action { implicit request =>
     request.body.asJson flatMap { json =>
@@ -36,10 +30,8 @@ class CarsController @Inject()(val controllerComponents: ControllerComponents)
       (json.as[JsObject] + ("id" -> JsNumber(0))).asOpt[Car]
     } match {
       case Some(newCar) =>
-        val nextId = carsList.map(_.id).max + 1
-        val toBeAdded = newCar.copy(id = nextId)
-        carsList += toBeAdded
-        Created(Json.toJson(nextId))
+        val newId = carRepository.add(newCar)
+        Created(Json.toJson(newId))
       case None =>
         BadRequest
     }
@@ -48,25 +40,22 @@ class CarsController @Inject()(val controllerComponents: ControllerComponents)
   def update = Action { implicit request =>
     request.body.asJson flatMap {
       Json.fromJson[Car](_).asOpt
-    } flatMap { updatedCar: Car =>
-      val i = carsList.indexWhere(_.id == updatedCar.id)
-      if (i >= 0) Some((updatedCar, i)) else None
     } match {
-      case Some((updatedCar, i)) =>
-        carsList(i) = updatedCar
+      case Some(updatedCar) => if (carRepository.update(updatedCar)) {
         NoContent
+      } else {
+        NotFound
+      }
       case None =>
         BadRequest
     }
   }
 
   def deleteById(id: Long) = Action {
-    val i = carsList.indexWhere(_.id == id)
-    if (i >= 0) {
-      carsList.remove(i)
+    if (carRepository.delete(id)) {
       NoContent
     } else {
-      BadRequest
+      NotFound
     }
   }
 }

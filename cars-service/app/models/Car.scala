@@ -1,6 +1,5 @@
 package models
 
-import play.api.libs.functional.syntax._
 import play.api.libs.json.JsonNaming.SnakeCase
 import play.api.libs.json._
 
