@@ -14,16 +14,6 @@ case class Car(
 )
 
 object Car {
-  implicit val config: JsonConfiguration = JsonConfiguration(SnakeCase)
-
-  implicit val carReads: Reads[Car] = (
-    (JsPath \ "id").readWithDefault[Long](0) and
-      (JsPath \ "registration_number").read[String] and
-      (JsPath \ "make").readNullable[String] and
-      (JsPath \ "model").readNullable[String] and
-      (JsPath \ "color").readNullable[String] and
-      (JsPath \ "year").readNullable[Int]
-  )(Car.apply _)
-
-  implicit val carWrites: OWrites[Car] = Json.writes[Car]
+  private implicit val config: JsonConfiguration = JsonConfiguration(SnakeCase)
+  implicit val carFormat: OFormat[Car] = Json.format[Car]
 }

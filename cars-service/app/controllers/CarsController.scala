@@ -1,7 +1,7 @@
 package controllers
 
 import models.Car
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNumber, JsObject, JsValue, Json}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 
 import javax.inject.{Inject, Singleton}
@@ -31,7 +31,10 @@ class CarsController @Inject()(val controllerComponents: ControllerComponents)
   )
 
   def add = Action { implicit request =>
-    getCarFromRequest(request) match {
+    request.body.asJson flatMap { json =>
+      // explicitly set the "id" field to make generated parser happy
+      (json.as[JsObject] + ("id" -> JsNumber(0))).asOpt[Car]
+    } match {
       case Some(newCar) =>
         val nextId = carsList.map(_.id).max + 1
         val toBeAdded = newCar.copy(id = nextId)
@@ -43,7 +46,9 @@ class CarsController @Inject()(val controllerComponents: ControllerComponents)
   }
 
   def update = Action { implicit request =>
-    getCarFromRequest(request) flatMap { updatedCar: Car =>
+    request.body.asJson flatMap {
+      Json.fromJson[Car](_).asOpt
+    } flatMap { updatedCar: Car =>
       val i = carsList.indexWhere(_.id == updatedCar.id)
       if (i >= 0) Some((updatedCar, i)) else None
     } match {
