@@ -2,7 +2,7 @@ package persistence.db
 
 import models.Car
 import repositories.CarRepository
-import repositories.CarSort.CarSort
+import repositories.CarField.CarField
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,5 +18,9 @@ class DbCarRepository @Inject() (private val carDAO: CarDAO)(implicit executionC
 
   override def delete(id: Long): Future[Boolean] = carDAO.delete(id).map(_ == 1)
 
-  override def getAll(carSort: CarSort, desc: Boolean): Future[Seq[Car]] = carDAO.getAll(carSort, desc)
+  override def getAll(
+                       filters: Map[CarField, String],
+                       sort: Option[CarField],
+                       desc: Boolean
+                     ): Future[Seq[Car]] = carDAO.getAll(filters, sort, desc)
 }

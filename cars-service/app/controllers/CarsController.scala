@@ -5,7 +5,7 @@ import models.CarFormat._
 import models.CarStatisticsFormat._
 import play.api.libs.json.{JsNumber, JsObject, JsString, Json}
 import play.api.mvc.{BaseController, ControllerComponents}
-import repositories.CarSort.{CarSort, Color, Id, Make, ManufacturingYear, Model, NoSort, RegistrationNumber}
+import repositories.CarField.{CarField, Color, Id, Make, ManufacturingYear, Model, RegistrationNumber}
 import repositories.{CarRepository, CarStatisticsRepository}
 
 import java.sql.SQLException
@@ -23,21 +23,38 @@ class CarsController @Inject() (
   private def makeError(message: String) = JsObject(Map(
     "error" -> JsString(message)
   ))
-  private def onError(ex: Throwable) = InternalServerError(makeError(s"${ex.getClass}: ${ex}"))
+  private def onError(ex: Throwable) = InternalServerError(makeError(s"${ex.getClass}: $ex"))
 
-  private def parseSortParameter(sort: Option[String]): Option[CarSort] = sort match {
-    case None => Some(NoSort)
-    case Some("id") => Some(Id)
-    case Some("registration_number") => Some(RegistrationNumber)
-    case Some("make") => Some(Make)
-    case Some("model") => Some(Model)
-    case Some("color") => Some(Color)
-    case Some("manufacturing_year") => Some(ManufacturingYear)
+  private def parseSortParameter(sort: Option[String]): Option[Option[CarField]] = sort match {
+    case None => Some(None)
+    case Some("id") => Some(Some(Id))
+    case Some("registration_number") => Some(Some(RegistrationNumber))
+    case Some("make") => Some(Some(Make))
+    case Some("model") => Some(Some(Model))
+    case Some("color") => Some(Some(Color))
+    case Some("manufacturing_year") => Some(Some(ManufacturingYear))
     case _ => None
   }
-  def getAll(sort: Option[String], desc: Option[Boolean]) = Action.async {
+  private def parseFilterParameters(queryString: Map[String, Seq[String]]): Map[CarField, String] = queryString
+    .foldLeft(Map[CarField, String]()) { (acc, queryParam) =>
+      val (param, value) = queryParam
+      param match {
+        case "id" => acc + (Id -> value.mkString)
+        case "registration_number" => acc + (RegistrationNumber -> value.mkString)
+        case "make" => acc + (Make -> value.mkString)
+        case "model" => acc + (Model -> value.mkString)
+        case "color" => acc + (Color -> value.mkString)
+        case "manufacturing_year" => acc + (ManufacturingYear -> value.mkString)
+        case _ => acc
+      }
+    }
+  def getAll(sort: Option[String], desc: Option[Boolean]) = Action.async { implicit request =>
     parseSortParameter(sort) match {
-      case Some(carSort) => carRepository.getAll(carSort, desc.getOrElse(false))
+      case Some(sortField) => carRepository.getAll(
+          parseFilterParameters(request.queryString),
+          sortField,
+          desc.getOrElse(false)
+        )
         .map(cars => Ok(Json.toJson(cars)))
         .recover(onError(_))
       case None => Future {

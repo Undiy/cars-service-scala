@@ -2,13 +2,13 @@ package persistence.db
 
 import models.{Car, CarStatistics, CarStatisticsTimestamps}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import repositories.CarSort.{CarSort, Color, Id, Make, ManufacturingYear, Model, NoSort, RegistrationNumber}
+import repositories.CarField.{CarField, Color, Id, Make, ManufacturingYear, Model, RegistrationNumber}
 import slick.jdbc.JdbcProfile
+import slick.lifted.ColumnOrdered
 
 import java.time.LocalDateTime
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import slick.lifted.ColumnOrdered
 
 class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext)
   extends HasDatabaseConfigProvider[JdbcProfile] {
@@ -44,27 +44,40 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
 
   def delete(id: Long): Future[Int] = db.run(cars.filter(_.id === id).delete)
 
-  def getAll(carSort: CarSort, desc: Boolean): Future[Seq[Car]] = {
+  def getAll(filters: Map[CarField, String], sort: Option[CarField], desc: Boolean): Future[Seq[Car]] = {
 
-    def sort[T](column: ColumnOrdered[T]) = if (desc) column.desc.nullsFirst else column.asc.nullsLast
+    def sortColumn[T](column: ColumnOrdered[T]) = if (desc) column.desc.nullsFirst else column.asc.nullsLast
 
-   db.run(
-      (carSort match {
-        case NoSort => cars.result
-        case Id => cars.sortBy(t => sort(t.id)).result
-        case RegistrationNumber => cars.sortBy(t => sort(t.registrationNumber)).result
-        case Make => cars.sortBy(t => sort(t.make)).result
-        case Model => cars.sortBy(t => sort(t.model)).result
-        case Color => cars.sortBy(t => sort(t.color)).result
-        case ManufacturingYear => cars.sortBy(t => sort(t.manufacturingYear)).result
-      }).map(_.map(_.toCar))
-    )
+    val query = filters.foldLeft(cars.distinct) { (acc, filter) =>
+      filter match {
+        case (field, value) => field match {
+          case Id => acc.filter(_.id === value.toLong)
+          case RegistrationNumber => acc.filter(_.registrationNumber.like(s"%$value%"))
+          case Make => acc.filter(_.make.toLowerCase.like(s"%${value.toLowerCase}%"))
+          case Model => acc.filter(_.model.toLowerCase.like(s"%${value.toLowerCase}%"))
+          case Color => acc.filter(_.color.toLowerCase.like(s"%${value.toLowerCase}%"))
+          case ManufacturingYear => acc.filter(_.manufacturingYear === value.toInt)
+        }
+      }
+    }
+
+    val sortedQuery = sort match {
+      case None => query
+      case Some(Id) => query.sortBy(t => sortColumn(t.id))
+      case Some(RegistrationNumber) => query.sortBy(t => sortColumn(t.registrationNumber))
+      case Some(Make) => query.sortBy(t => sortColumn(t.make))
+      case Some(Model) => query.sortBy(t => sortColumn(t.model))
+      case Some(Color) => query.sortBy(t => sortColumn(t.color))
+      case Some(ManufacturingYear) => query.sortBy(t => sortColumn(t.manufacturingYear))
+    }
+
+    db.run(sortedQuery.result.map(_.map(_.toCar)))
   }
 
   def getStatistics: Future[CarStatistics] = {
 
     for {
-      numRecords <- db.run((cars.length.result))
+      numRecords <- db.run(cars.length.result)
       timestamps <- db.run(DBIO.sequence(Seq(
         cars.map(_.createdAt).min.result,
         cars.map(_.createdAt).max.result,

@@ -1,7 +1,7 @@
 package repositories
 
 import models.Car
-import repositories.CarSort.CarSort
+import repositories.CarField.CarField
 
 import scala.concurrent.Future
 
@@ -11,12 +11,11 @@ trait CarRepository {
   def add(car: Car): Future[Long]
   def update(car: Car): Future[Boolean]
   def delete(id: Long): Future[Boolean]
-  def getAll(sort: CarSort, desc: Boolean): Future[Seq[Car]]
+  def getAll(filters: Map[CarField, String], sort: Option[CarField], desc: Boolean): Future[Seq[Car]]
 }
 
-object CarSort extends Enumeration {
-  type CarSort = Value
-  val NoSort = Value
+object CarField extends Enumeration {
+  type CarField = Value
   val Id = Value
   val RegistrationNumber = Value
   val Make = Value
