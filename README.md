@@ -1,5 +1,10 @@
 # cars-service: a simple REST service using play & slick
 
+## Setup
+
+- Build service image using <code> Docker / publishLocal </code> in sbt console
+- Run <code>docker-compose up</code> from cars-service directory. Service would be available on <code>localhost:9000</code>
+
 ## API
 
 <table>
