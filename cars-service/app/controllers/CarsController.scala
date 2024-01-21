@@ -17,7 +17,7 @@ class CarsController @Inject() (
   extends BaseController {
 
   private def onError(ex: Throwable) = InternalServerError(JsObject(Map(
-      ("error" -> JsString("$ex"))
+      ("error" -> JsString(ex.toString))
     )))
 
   def getAll = Action.async {
