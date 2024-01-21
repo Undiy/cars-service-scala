@@ -3,12 +3,12 @@ package controllers
 import models.Car
 import models.CarFormat._
 import models.CarStatisticsFormat._
-import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException
 import play.api.libs.json.{JsNumber, JsObject, JsString, Json}
 import play.api.mvc.{BaseController, ControllerComponents}
 import repositories.CarSort.{CarSort, Color, Id, Make, ManufacturingYear, Model, NoSort, RegistrationNumber}
 import repositories.{CarRepository, CarStatisticsRepository}
 
+import java.sql.SQLException
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -64,8 +64,11 @@ class CarsController @Inject() (
         carRepository.add(newCar)
           .map(newId => Created(Json.toJson(newId)))
           .recover {
-            case _: JdbcSQLIntegrityConstraintViolationException => BadRequest(makeError(
-              s"Car with registration number `${newCar.registrationNumber}` already exists"))
+            case ex: SQLException => if (ex.getMessage.contains("ERROR: duplicate key value violates unique constraint")) {
+              BadRequest(makeError(s"Car with registration number `${newCar.registrationNumber}` already exists"))
+            } else {
+              onError(ex)
+            }
             case ex => onError(ex)
           }
       case None =>
@@ -80,8 +83,11 @@ class CarsController @Inject() (
       case Some(updatedCar) => carRepository.update(updatedCar)
         .map(if (_) NoContent else NotFound)
         .recover {
-          case _: JdbcSQLIntegrityConstraintViolationException => BadRequest(makeError(
-            s"Car with registration number `${updatedCar.registrationNumber}` already exists"))
+          case ex: SQLException => if (ex.getMessage.contains("ERROR: duplicate key value violates unique constraint")) {
+            BadRequest(makeError(s"Car with registration number `${updatedCar.registrationNumber}` already exists"))
+          } else {
+            onError(ex)
+          }
           case ex => onError(ex)
         }
       case None =>
