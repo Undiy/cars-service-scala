@@ -3,6 +3,7 @@ package controllers
 import models.Car
 import models.CarFormat._
 import models.CarStatisticsFormat._
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException
 import play.api.libs.json.{JsNumber, JsObject, JsString, Json}
 import play.api.mvc.{BaseController, ControllerComponents}
 import repositories.{CarRepository, CarStatisticsRepository}
@@ -18,9 +19,10 @@ class CarsController @Inject() (
                     )(implicit executionContext: ExecutionContext)
   extends BaseController {
 
-  private def onError(ex: Throwable) = InternalServerError(JsObject(Map(
-      "error" -> JsString(s"${ex.getClass}: ${ex}")
-    )))
+  private def makeError(message: String) = JsObject(Map(
+    "error" -> JsString(message)
+  ))
+  private def onError(ex: Throwable) = InternalServerError(makeError(s"${ex.getClass}: ${ex}"))
 
   def getAll = Action.async {
     carRepository.getAll
@@ -45,7 +47,11 @@ class CarsController @Inject() (
       case Some(newCar) =>
         carRepository.add(newCar)
           .map(newId => Created(Json.toJson(newId)))
-          .recover(onError(_))
+          .recover {
+            case _: JdbcSQLIntegrityConstraintViolationException => BadRequest(makeError(
+              s"Car with registration number `${newCar.registrationNumber}` already exists"))
+            case ex => onError(ex)
+          }
       case None =>
         Future(BadRequest)
     }
@@ -57,7 +63,11 @@ class CarsController @Inject() (
     } match {
       case Some(updatedCar) => carRepository.update(updatedCar)
         .map(if (_) NoContent else NotFound)
-        .recover(onError(_))
+        .recover {
+          case _: JdbcSQLIntegrityConstraintViolationException => BadRequest(makeError(
+            s"Car with registration number `${updatedCar.registrationNumber}` already exists"))
+          case ex => onError(ex)
+        }
       case None =>
         Future(BadRequest)
     }
