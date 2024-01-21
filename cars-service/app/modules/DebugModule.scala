@@ -8,6 +8,6 @@ class DebugModule (environment: Environment, configuration: Configuration)
   extends AbstractModule {
     override def configure(): Unit = {
       bind(classOf[CarRepository])
-        .toInstance(new InMemoryCarRepository)
+        .to(classOf[InMemoryCarRepository])
     }
   }

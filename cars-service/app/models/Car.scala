@@ -12,7 +12,7 @@ case class Car(
   manufacturingYear: Option[Int] = None
 )
 
-object Car {
+object CarFormat {
   private implicit val config: JsonConfiguration = JsonConfiguration(SnakeCase)
   implicit val carFormat: OFormat[Car] = Json.format[Car]
 }

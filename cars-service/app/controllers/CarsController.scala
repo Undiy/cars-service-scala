@@ -1,61 +1,69 @@
 package controllers
 
 import models.Car
-import play.api.libs.json.{JsNumber, JsObject, Json}
+import models.CarFormat._
+import play.api.libs.json.{JsNumber, JsObject, JsString, Json}
 import play.api.mvc.{BaseController, ControllerComponents}
 import repositories.CarRepository
 
 import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
+
 
 class CarsController @Inject() (
                       val carRepository: CarRepository,
                       val controllerComponents: ControllerComponents
-                    )
+                    )(implicit executionContext: ExecutionContext)
   extends BaseController {
 
-  def getAll = Action {
-    Ok(Json.toJson(carRepository.findAll()))
+  private def onError(ex: Throwable) = InternalServerError(JsObject(Map(
+      ("error" -> JsString("$ex"))
+    )))
+
+  def getAll = Action.async {
+    carRepository.getAll()
+      .map(cars => Ok(Json.toJson(cars)))
+      .recover(onError(_))
   }
 
-  def getById(id: Long) = Action {
-    carRepository.getById(id) match {
-      case Some(item) => Ok(Json.toJson(item))
-      case None => NotFound
-    }
+  def getById(id: Long) = Action.async {
+    carRepository.getById(id)
+      .map {
+        case Some(car) => Ok(Json.toJson(car))
+        case None => NotFound
+      }
+      .recover(onError(_))
   }
 
-  def add = Action { implicit request =>
+  def add = Action.async { implicit request =>
     request.body.asJson flatMap { json =>
       // explicitly set the "id" field to make generated parser happy
       (json.as[JsObject] + ("id" -> JsNumber(0))).asOpt[Car]
     } match {
       case Some(newCar) =>
-        val newId = carRepository.add(newCar)
-        Created(Json.toJson(newId))
+        carRepository.add(newCar)
+          .map(newId => Created(Json.toJson(newId)))
+          .recover(onError(_))
       case None =>
-        BadRequest
+        Future(BadRequest)
     }
   }
 
-  def update = Action { implicit request =>
+  def update = Action.async { implicit request =>
     request.body.asJson flatMap {
       Json.fromJson[Car](_).asOpt
     } match {
-      case Some(updatedCar) => if (carRepository.update(updatedCar)) {
-        NoContent
-      } else {
-        NotFound
-      }
+      case Some(updatedCar) => carRepository.update(updatedCar)
+        .map(if (_) NoContent else NotFound)
+        .recover(onError(_))
       case None =>
-        BadRequest
+        Future(BadRequest)
     }
   }
 
-  def deleteById(id: Long) = Action {
-    if (carRepository.delete(id)) {
-      NoContent
-    } else {
-      NotFound
-    }
+  def deleteById(id: Long) = Action.async {
+    carRepository.delete(id)
+      .map(if (_) NoContent else NotFound)
+      .recover(onError(_))
   }
 }
