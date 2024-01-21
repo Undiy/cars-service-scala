@@ -18,5 +18,5 @@ class DbCarRepository @Inject() (private val carDAO: CarDAO)(implicit executionC
 
   override def delete(id: Long): Future[Boolean] = carDAO.delete(id).map(_ == 1)
 
-  override def getAll(carSort: CarSort): Future[Seq[Car]] = carDAO.getAll(carSort)
+  override def getAll(carSort: CarSort, desc: Boolean): Future[Seq[Car]] = carDAO.getAll(carSort, desc)
 }

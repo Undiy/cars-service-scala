@@ -47,7 +47,7 @@ class InMemoryCarRepository @Inject() ()(implicit executionContext: ExecutionCon
 
   }
 
-  override def getAll(sort: CarSort) = Future {
+  override def getAll(sort: CarSort, desc: Boolean) = Future {
     cars.toList
   }
 

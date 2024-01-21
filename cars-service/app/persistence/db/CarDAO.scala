@@ -8,6 +8,7 @@ import slick.jdbc.JdbcProfile
 import java.time.LocalDateTime
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import slick.lifted.ColumnOrdered
 
 class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext)
   extends HasDatabaseConfigProvider[JdbcProfile] {
@@ -43,16 +44,19 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
 
   def delete(id: Long): Future[Int] = db.run(cars.filter(_.id === id).delete)
 
-  def getAll(carSort: CarSort): Future[Seq[Car]] = {
+  def getAll(carSort: CarSort, desc: Boolean): Future[Seq[Car]] = {
+
+    def sort[T](column: ColumnOrdered[T]) = if (desc) column.desc.nullsFirst else column.asc.nullsLast
+
    db.run(
       (carSort match {
         case NoSort => cars.result
-        case Id => cars.sortBy(_.id).result
-        case RegistrationNumber => cars.sortBy(_.registrationNumber).result
-        case Make => cars.sortBy(_.make.nullsLast).result
-        case Model => cars.sortBy(_.model.nullsLast).result
-        case Color => cars.sortBy(_.color.nullsLast).result
-        case ManufacturingYear => cars.sortBy(_.manufacturingYear.nullsLast).result
+        case Id => cars.sortBy(t => sort(t.id)).result
+        case RegistrationNumber => cars.sortBy(t => sort(t.registrationNumber)).result
+        case Make => cars.sortBy(t => sort(t.make)).result
+        case Model => cars.sortBy(t => sort(t.model)).result
+        case Color => cars.sortBy(t => sort(t.color)).result
+        case ManufacturingYear => cars.sortBy(t => sort(t.manufacturingYear)).result
       }).map(_.map(_.toCar))
     )
   }

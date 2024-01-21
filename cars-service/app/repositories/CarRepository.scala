@@ -11,7 +11,7 @@ trait CarRepository {
   def add(car: Car): Future[Long]
   def update(car: Car): Future[Boolean]
   def delete(id: Long): Future[Boolean]
-  def getAll(sort: CarSort): Future[Seq[Car]]
+  def getAll(sort: CarSort, desc: Boolean): Future[Seq[Car]]
 }
 
 object CarSort extends Enumeration {

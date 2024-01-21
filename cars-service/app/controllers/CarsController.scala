@@ -35,9 +35,9 @@ class CarsController @Inject() (
     case Some("manufacturing_year") => Some(ManufacturingYear)
     case _ => None
   }
-  def getAll(sort: Option[String]) = Action.async {
+  def getAll(sort: Option[String], desc: Option[Boolean]) = Action.async {
     parseSortParameter(sort) match {
-      case Some(carSort) => carRepository.getAll(carSort)
+      case Some(carSort) => carRepository.getAll(carSort, desc.getOrElse(false))
         .map(cars => Ok(Json.toJson(cars)))
         .recover(onError(_))
       case None => Future {

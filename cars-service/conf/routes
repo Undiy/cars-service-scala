@@ -4,7 +4,7 @@
 # ~~~~
 
 # Cars
-GET     /cars                           controllers.CarsController.getAll(sort: Option[String])
+GET     /cars                           controllers.CarsController.getAll(sort: Option[String], desc: Option[Boolean])
 GET     /car/:id                        controllers.CarsController.getById(id: Long)
 POST    /car                            controllers.CarsController.add
 PUT     /car                            controllers.CarsController.update
