@@ -13,6 +13,7 @@ libraryDependencies += guice
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test
 libraryDependencies += "org.playframework" %% "play-slick" % "6.0.0"
 libraryDependencies += "com.h2database" % "h2" % "2.2.224"
+libraryDependencies += "org.postgresql" % "postgresql" % "42.5.4"
 
 Docker / maintainer := "yarutin.eu@gmail.com"
 Docker / packageName := "cars-service"

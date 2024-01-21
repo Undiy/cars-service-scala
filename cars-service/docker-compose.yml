@@ -1,0 +1,28 @@
+version: '3.3'
+services:
+  cars-db:
+    image: postgres:11
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=cars
+    ports:
+      - '5432:5432'
+    volumes:
+      - cars-data:/var/lib/postgresql/data
+
+  cars-service:
+    image: cars-service
+    ports:
+      - "9000:9000"
+    depends_on:
+      - cars-db
+    environment:
+      - DB_HOST=cars-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_NAME=cars
+volumes:
+  cars-data:
