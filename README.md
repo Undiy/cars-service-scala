@@ -96,3 +96,10 @@
   </tr>
 </table>
 
+## App Overview
+- **model**: contains classes for car entry and statistic object
+- **controllers**: contains a single CarsController
+- **repositories**: contain CarRepository and CarStatisticsRepository traits to abstract persistence layer in controller
+- **persistence.db** contain persistence logic implemented with Slick
+- **persistence.inmemory** repositories backed by ListBuffer, used on early impementation stages
+- **modules** DI (guice) modules, DebugModule for inmemory implementation and DbModule for DB (Slick) implementation
