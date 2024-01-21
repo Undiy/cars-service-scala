@@ -28,7 +28,7 @@
     <td>
 	    200 - car entry
 	<br>
-	    404 - no car for given id
+	    404 - no car entry for given id
     </td>	  
   </tr>
   <tr>
@@ -38,11 +38,11 @@
       
 ```json
 {
-	"registration_number": "some_number_1",
-	"make": "kia",
-	"model": "rio",
-	"color": "green",
-	"manufacturing_year": 2010
+  "registration_number": "some_number_1",
+  "make": "kia",
+  "model": "rio",
+  "color": "green",
+  "manufacturing_year": 2010
 }
 ```
   </td>
@@ -59,12 +59,12 @@
       
 ```json
 {
-  	"id": "1",
-	"registration_number": "some_number_1",
-	"make": "kia",
-	"model": "rio",
-	"color": "green",
-	"manufacturing_year": 2010
+  "id": "1",
+  "registration_number": "some_number_1",
+  "make": "kia",
+  "model": "rio",
+  "color": "green",
+  "manufacturing_year": 2010
 }
 ```
   </td>
@@ -72,6 +72,8 @@
 	204 - car entry is successfully updated
 	<br>
 	400 - duplicate registration_number error
+	<br>
+	404 - no car entry for given id
     </td>
   </tr>
   </tr>
@@ -82,7 +84,7 @@
     <td>
 	204 - car entry is successfully removed
 	<br>
-	404 - no car for given id
+	404 - no car entry for given id
     </td>
   </tr>
   </tr>
