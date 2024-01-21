@@ -2,9 +2,10 @@ package controllers
 
 import models.Car
 import models.CarFormat._
+import models.CarStatisticsFormat._
 import play.api.libs.json.{JsNumber, JsObject, JsString, Json}
 import play.api.mvc.{BaseController, ControllerComponents}
-import repositories.CarRepository
+import repositories.{CarRepository, CarStatisticsRepository}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -12,16 +13,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CarsController @Inject() (
                       val carRepository: CarRepository,
+                      val carStatisticsRepository: CarStatisticsRepository,
                       val controllerComponents: ControllerComponents
                     )(implicit executionContext: ExecutionContext)
   extends BaseController {
 
   private def onError(ex: Throwable) = InternalServerError(JsObject(Map(
-      ("error" -> JsString(ex.toString))
+      "error" -> JsString(s"${ex.getClass}: ${ex}")
     )))
 
   def getAll = Action.async {
-    carRepository.getAll()
+    carRepository.getAll
       .map(cars => Ok(Json.toJson(cars)))
       .recover(onError(_))
   }
@@ -64,6 +66,12 @@ class CarsController @Inject() (
   def deleteById(id: Long) = Action.async {
     carRepository.delete(id)
       .map(if (_) NoContent else NotFound)
+      .recover(onError(_))
+  }
+
+  def getStatistics = Action.async {
+    carStatisticsRepository.getStatistics
+      .map( carStatistics => Ok(Json.toJson(carStatistics) ))
       .recover(onError(_))
   }
 }

@@ -1,13 +1,17 @@
-package repositories
+package persistence.inmemory
+
 import com.google.inject.Singleton
-import models.Car
+import models.{Car, CarStatistics}
+import play.api.libs.json.JsNull
+import repositories.{CarRepository, CarStatisticsRepository}
 
 import javax.inject.Inject
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class InMemoryCarRepository @Inject() ()(implicit executionContext: ExecutionContext) extends CarRepository {
+class InMemoryCarRepository @Inject() ()(implicit executionContext: ExecutionContext)
+  extends CarRepository with CarStatisticsRepository {
   private val cars = new ListBuffer[Car]()
 
   private def getNextId(): Long = cars.map(_.id).maxOption.getOrElse(0L) + 1
@@ -43,7 +47,11 @@ class InMemoryCarRepository @Inject() ()(implicit executionContext: ExecutionCon
 
   }
 
-  override def getAll() = Future {
+  override def getAll = Future {
     cars.toList
+  }
+
+  override def getStatistics = Future {
+    CarStatistics(cars.length)
   }
 }

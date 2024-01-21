@@ -1,7 +1,6 @@
-package persistence.bootstrap
+package persistence.db.bootstrap
 
-import persistence.CarDAO
-
+import persistence.db.CarDAO
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
