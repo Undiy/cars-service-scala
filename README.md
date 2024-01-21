@@ -13,9 +13,13 @@
   </tr>
   <tr>
     <td>GET</td>
-    <td><pre>/cars?sort={field_name}&desc={false|true}</pre></td>
+    <td><pre>/cars[?sort={field_name}[&desc=true}][&{field_name}={filter}]</pre></td>
     <td></td>
-    <td>200 - list of cars</td>
+    <td>
+	    200 - list of cars
+	    <br>
+	    400 - invalid sort parameter
+    </td>
   </tr>
   <tr>
     <td>GET</td>
@@ -55,7 +59,7 @@
       
 ```json
 {
-  "id": "1",
+  	"id": "1",
 	"registration_number": "some_number_1",
 	"make": "kia",
 	"model": "rio",
