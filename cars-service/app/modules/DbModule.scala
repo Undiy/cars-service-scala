@@ -1,8 +1,8 @@
 package modules
 
 import com.google.inject.AbstractModule
-import persistence.db.{DbCarRepository, DbCarStatisticsRepository}
 import persistence.db.bootstrap.DbSchemaInitializer
+import persistence.db.{DbCarRepository, DbCarStatisticsRepository}
 import play.api.{Configuration, Environment}
 import repositories.{CarRepository, CarStatisticsRepository}
 

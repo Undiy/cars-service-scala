@@ -6,6 +6,7 @@ import models.CarStatisticsFormat._
 import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException
 import play.api.libs.json.{JsNumber, JsObject, JsString, Json}
 import play.api.mvc.{BaseController, ControllerComponents}
+import repositories.CarSort.{CarSort, Color, Id, Make, ManufacturingYear, Model, NoSort, RegistrationNumber}
 import repositories.{CarRepository, CarStatisticsRepository}
 
 import javax.inject.Inject
@@ -24,10 +25,25 @@ class CarsController @Inject() (
   ))
   private def onError(ex: Throwable) = InternalServerError(makeError(s"${ex.getClass}: ${ex}"))
 
-  def getAll = Action.async {
-    carRepository.getAll
-      .map(cars => Ok(Json.toJson(cars)))
-      .recover(onError(_))
+  private def parseSortParameter(sort: Option[String]): Option[CarSort] = sort match {
+    case None => Some(NoSort)
+    case Some("id") => Some(Id)
+    case Some("registration_number") => Some(RegistrationNumber)
+    case Some("make") => Some(Make)
+    case Some("model") => Some(Model)
+    case Some("color") => Some(Color)
+    case Some("manufacturing_year") => Some(ManufacturingYear)
+    case _ => None
+  }
+  def getAll(sort: Option[String]) = Action.async {
+    parseSortParameter(sort) match {
+      case Some(carSort) => carRepository.getAll(carSort)
+        .map(cars => Ok(Json.toJson(cars)))
+        .recover(onError(_))
+      case None => Future {
+        BadRequest(makeError(s"Invalid sort parameter: ${sort.get}"))
+      }
+    }
   }
 
   def getById(id: Long) = Action.async {

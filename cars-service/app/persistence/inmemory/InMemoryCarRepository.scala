@@ -2,7 +2,7 @@ package persistence.inmemory
 
 import com.google.inject.Singleton
 import models.{Car, CarStatistics}
-import play.api.libs.json.JsNull
+import repositories.CarSort.CarSort
 import repositories.{CarRepository, CarStatisticsRepository}
 
 import javax.inject.Inject
@@ -47,7 +47,7 @@ class InMemoryCarRepository @Inject() ()(implicit executionContext: ExecutionCon
 
   }
 
-  override def getAll = Future {
+  override def getAll(sort: CarSort) = Future {
     cars.toList
   }
 

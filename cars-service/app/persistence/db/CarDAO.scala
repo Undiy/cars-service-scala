@@ -2,7 +2,7 @@ package persistence.db
 
 import models.{Car, CarStatistics, CarStatisticsTimestamps}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import repositories.CarSort.{CarSort, Color, Id, Make, ManufacturingYear, Model, NoSort, RegistrationNumber}
 import slick.jdbc.JdbcProfile
 
 import java.time.LocalDateTime
@@ -11,6 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext)
   extends HasDatabaseConfigProvider[JdbcProfile] {
+
   import profile.api._
 
   private val cars = TableQuery[CarsTable]
@@ -18,7 +19,9 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
   def initSchema(): Future[Unit] = db.run(cars.schema.createIfNotExists)
 
   def getById(id: Long): Future[Option[Car]] = db.run(cars.filter(_.id === id).result.headOption.map(_.map(_.toCar)))
+
   def add(car: Car): Future[Long] = db.run(cars returning cars.map(_.id) += carDTOFromCar(car))
+
   def update(car: Car): Future[Int] = db.run(cars
     .filter(_.id === car.id)
     .map(v => (
@@ -28,7 +31,7 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
       v.color,
       v.manufacturingYear,
       v.updatedAt
-      ))
+    ))
     .update((
       car.registrationNumber,
       car.make,
@@ -37,8 +40,22 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
       car.manufacturingYear,
       LocalDateTime.now()
     )))
+
   def delete(id: Long): Future[Int] = db.run(cars.filter(_.id === id).delete)
-  def getAll: Future[Seq[Car]] = db.run(cars.result.map(_.map(_.toCar)))
+
+  def getAll(carSort: CarSort): Future[Seq[Car]] = {
+   db.run(
+      (carSort match {
+        case NoSort => cars.result
+        case Id => cars.sortBy(_.id).result
+        case RegistrationNumber => cars.sortBy(_.registrationNumber).result
+        case Make => cars.sortBy(_.make.nullsLast).result
+        case Model => cars.sortBy(_.model.nullsLast).result
+        case Color => cars.sortBy(_.color.nullsLast).result
+        case ManufacturingYear => cars.sortBy(_.manufacturingYear.nullsLast).result
+      }).map(_.map(_.toCar))
+    )
+  }
 
   def getStatistics: Future[CarStatistics] = {
 

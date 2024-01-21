@@ -1,7 +1,7 @@
 package persistence.db
 
 import models.CarStatistics
-import repositories.{CarRepository, CarStatisticsRepository}
+import repositories.CarStatisticsRepository
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}

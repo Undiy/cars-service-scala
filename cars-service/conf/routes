@@ -4,11 +4,11 @@
 # ~~~~
 
 # Cars
-GET     /cars                           controllers.CarsController.getAll
-GET     /car/:id                       controllers.CarsController.getById(id: Long)
-POST    /car                           controllers.CarsController.add
-PUT     /car                           controllers.CarsController.update
-DELETE  /car/:id                       controllers.CarsController.deleteById(id: Long)
+GET     /cars                           controllers.CarsController.getAll(sort: Option[String])
+GET     /car/:id                        controllers.CarsController.getById(id: Long)
+POST    /car                            controllers.CarsController.add
+PUT     /car                            controllers.CarsController.update
+DELETE  /car/:id                        controllers.CarsController.deleteById(id: Long)
 
 GET /cars/statistics                    controllers.CarsController.getStatistics
 
