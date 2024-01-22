@@ -51,12 +51,12 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
     val query = filters.foldLeft(cars.distinct) { (acc, filter) =>
       filter match {
         case (field, value) => field match {
-          case Id => acc.filter(_.id === value.toLong)
+          case Id => acc.filter(_.id === value.toLongOption.getOrElse(0L))
           case RegistrationNumber => acc.filter(_.registrationNumber.like(s"%$value%"))
           case Make => acc.filter(_.make.toLowerCase.like(s"%${value.toLowerCase}%"))
           case Model => acc.filter(_.model.toLowerCase.like(s"%${value.toLowerCase}%"))
           case Color => acc.filter(_.color.toLowerCase.like(s"%${value.toLowerCase}%"))
-          case ManufacturingYear => acc.filter(_.manufacturingYear === value.toInt)
+          case ManufacturingYear => acc.filter(_.manufacturingYear === value.toIntOption.getOrElse(0))
         }
       }
     }
