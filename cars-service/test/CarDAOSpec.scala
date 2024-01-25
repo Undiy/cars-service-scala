@@ -16,11 +16,10 @@ class CarDAOSpec extends Specification {
       val app2dao = Application.instanceCache[CarDAO]
       val dao: CarDAO = app2dao(app)
 
-      Await.result(dao.initSchema(), 1.seconds)
       val insertedIds = Await.result(Future.sequence(fakeCars.map(dao.add)), 1.seconds)
       val storedCars = Await.result(dao.getAll(), 1.seconds)
 
-      storedCars.toSet must equalTo(fakeCars.lazyZip(insertedIds).map( (car, id) => car.copy(id = id) ).toSet)
+      storedCars.toSet mustEqual fakeCars.lazyZip(insertedIds).map( (car, id) => car.copy(id = id) ).toSet
     }
 
     "update a car" in new WithApplicationLoader {
@@ -28,7 +27,6 @@ class CarDAOSpec extends Specification {
       val dao: CarDAO = app2dao(app)
 
 
-      Await.result(dao.initSchema(), 1.seconds)
       val insertedId = Await.result(dao.add(fakeCars(0)), 1.seconds)
       val updatedCar = fakeCars(2).copy(id = insertedId)
 
@@ -45,7 +43,6 @@ class CarDAOSpec extends Specification {
     val dao: CarDAO = app2dao(app)
 
 
-    Await.result(dao.initSchema(), 1.seconds)
     val insertedId = Await.result(dao.add(fakeCars(0)), 1.seconds)
     val updatedCar = fakeCars(2).copy(id = insertedId)
 
@@ -53,29 +50,27 @@ class CarDAOSpec extends Specification {
 
     val storedCars = Await.result(dao.getAll(), 1.second)
 
-    storedCars must equalTo(Seq())
+    storedCars mustEqual Seq()
   }
 
   "return empty statistics when there are no cars"  in new WithApplicationLoader {
     val app2dao = Application.instanceCache[CarDAO]
     val dao: CarDAO = app2dao(app)
 
-    Await.result(dao.initSchema(), 1.seconds)
     val emptyStats = Await.result(dao.getStatistics, 1.second)
 
-    emptyStats must equalTo(CarStatistics(0))
+    emptyStats mustEqual CarStatistics(0)
   }
 
   "return correct statistics for several cars" in new WithApplicationLoader {
     val app2dao = Application.instanceCache[CarDAO]
     val dao: CarDAO = app2dao(app)
 
-    Await.result(dao.initSchema(), 1.seconds)
     Await.result(Future.sequence(fakeCars.map(dao.add)), 1.seconds)
 
     val stats = Await.result(dao.getStatistics, 1.second)
 
-    stats.numRecords must equalTo(fakeCars.size)
+    stats.numRecords mustEqual fakeCars.size
     stats.mostCommonMake.get.split(", ").toSeq must containAllOf(Seq("Toyota", "Kia"))
     stats.mostCommonColor must beSome("Green")
   }
@@ -84,7 +79,6 @@ class CarDAOSpec extends Specification {
     val app2dao = Application.instanceCache[CarDAO]
     val dao: CarDAO = app2dao(app)
 
-    Await.result(dao.initSchema(), 1.seconds)
     Await.result(Future.sequence(fakeCars.map(dao.add)), 1.seconds)
 
     val storedCars = Await.result(dao.getAll(Map(
@@ -98,7 +92,6 @@ class CarDAOSpec extends Specification {
     val app2dao = Application.instanceCache[CarDAO]
     val dao: CarDAO = app2dao(app)
 
-    Await.result(dao.initSchema(), 1.seconds)
     Await.result(Future.sequence(fakeCars.map(dao.add)), 1.seconds)
 
     val storedCars = Await.result(dao.getAll(
