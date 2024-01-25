@@ -10,10 +10,12 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 scalaVersion := "2.13.12"
 
 libraryDependencies += guice
-libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test
 libraryDependencies += "org.playframework" %% "play-slick" % "6.0.0"
 libraryDependencies += "com.h2database" % "h2" % "2.2.224"
 libraryDependencies += "org.postgresql" % "postgresql" % "42.5.4"
+libraryDependencies += specs2 % Test
+
+Test / javaOptions ++= Seq("-Dconfig.file=conf/test.conf")
 
 Docker / maintainer := "yarutin.eu@gmail.com"
 Docker / packageName := "cars-service"

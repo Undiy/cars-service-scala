@@ -44,8 +44,7 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
 
   def delete(id: Long): Future[Int] = db.run(cars.filter(_.id === id).delete)
 
-  def getAll(filters: Map[CarField, String], sort: Option[CarField], desc: Boolean): Future[Seq[Car]] = {
-
+  def getAll(filters: Map[CarField, String] = Map(), sort: Option[CarField] = None, desc: Boolean = false): Future[Seq[Car]] = {
     def sortColumn[T](column: ColumnOrdered[T]) = if (desc) column.desc.nullsFirst else column.asc.nullsLast
 
     val query = filters.foldLeft(cars.distinct) { (acc, filter) =>
@@ -62,13 +61,13 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
     }
 
     val sortedQuery = sort match {
-      case None => query
       case Some(Id) => query.sortBy(t => sortColumn(t.id))
       case Some(RegistrationNumber) => query.sortBy(t => sortColumn(t.registrationNumber))
       case Some(Make) => query.sortBy(t => sortColumn(t.make))
       case Some(Model) => query.sortBy(t => sortColumn(t.model))
       case Some(Color) => query.sortBy(t => sortColumn(t.color))
       case Some(ManufacturingYear) => query.sortBy(t => sortColumn(t.manufacturingYear))
+      case _ => query
     }
 
     db.run(sortedQuery.result.map(_.map(_.toCar)))
@@ -84,8 +83,8 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
         cars.filterNot(q => q.updatedAt === q.createdAt).map(_.updatedAt).min.result,
         cars.filterNot(q => q.updatedAt === q.createdAt).map(_.updatedAt).max.result
       )))
-      colors <- db.run(mostCommonQuery(_.color.getOrElse("")))
-      makes <- db.run(mostCommonQuery(_.make.getOrElse("")))
+      colors <- db.run(mostCommonQuery(_.color))
+      makes <- db.run(mostCommonQuery(_.make))
     } yield {
       val (createdAt, updatedAt) = timestamps.toList match {
         case List(createdAtMin, createdAtMax, updatedAtMin, updatedAtMax) => (
@@ -105,8 +104,9 @@ class CarDAO @Inject() (protected val dbConfigProvider: DatabaseConfigProvider)(
     }
   }
 
-  private def mostCommonQuery(selector: CarsTable => Rep[String]) = cars
-    .groupBy(selector)
+  private def mostCommonQuery(selector: CarsTable => Rep[Option[String]]) = cars
+    .filterNot(t => selector(t).isEmpty)
+    .groupBy(t => selector(t).getOrElse(""))
     .map {
       case (value, group) => (value, group.length)
     }
