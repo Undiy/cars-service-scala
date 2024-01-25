@@ -4,6 +4,7 @@ import org.specs2.mutable.Specification
 import persistence.db.CarDAO
 import play.api.Application
 import play.api.test.WithApplicationLoader
+import repositories.CarField
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
@@ -75,7 +76,7 @@ class CarDAOSpec extends Specification {
     emptyStats must equalTo(CarStatistics(0))
   }
 
-  "return correct statistics for several cars"  in new WithApplicationLoader {
+  "return correct statistics for several cars" in new WithApplicationLoader {
     val app2dao = Application.instanceCache[CarDAO]
     val dao: CarDAO = app2dao(app)
 
@@ -87,5 +88,35 @@ class CarDAOSpec extends Specification {
     stats.numRecords must equalTo(fakeCars.size)
     stats.mostCommonMake.get.split(", ").toSeq must containAllOf(Seq("Toyota", "Kia"))
     stats.mostCommonColor must beSome("Green")
+  }
+
+  "filter by field values" in new WithApplicationLoader {
+    val app2dao = Application.instanceCache[CarDAO]
+    val dao: CarDAO = app2dao(app)
+
+    Await.result(dao.initSchema(), 1.seconds)
+    Await.result(Future.sequence(fakeCars.map(dao.add)), 1.seconds)
+
+    val storedCars = Await.result(dao.getAll(Map(
+      CarField.Color -> "Green"
+    )), 1.second)
+
+    forall(storedCars)(_.color must beSome("Green"))
+  }
+
+  "sort by field values" in new WithApplicationLoader {
+    val app2dao = Application.instanceCache[CarDAO]
+    val dao: CarDAO = app2dao(app)
+
+    Await.result(dao.initSchema(), 1.seconds)
+    Await.result(Future.sequence(fakeCars.map(dao.add)), 1.seconds)
+
+    val storedCars = Await.result(dao.getAll(
+      sort = Some(CarField.ManufacturingYear)
+    ), 1.second)
+
+    storedCars must beSorted(Ordering.by[Car, Int]({
+      _.manufacturingYear.getOrElse(Int.MaxValue)
+    }))
   }
 }
