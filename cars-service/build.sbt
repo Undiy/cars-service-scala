@@ -14,6 +14,7 @@ libraryDependencies += "org.playframework" %% "play-slick" % "6.0.0"
 libraryDependencies += "com.h2database" % "h2" % "2.2.224"
 libraryDependencies += "org.postgresql" % "postgresql" % "42.5.4"
 libraryDependencies += specs2 % Test
+libraryDependencies += "org.specs2" %% "specs2-matcher-extra" % "4.19.2" % Test
 
 Test / javaOptions ++= Seq("-Dconfig.file=conf/test.conf")
 

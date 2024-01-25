@@ -1,4 +1,4 @@
-import FakeCars.fakeCars
+import fake.FakeCars.fakeCars
 import models.{Car, CarStatistics}
 import org.specs2.mutable.Specification
 import persistence.db.CarDAO
@@ -9,17 +9,6 @@ import repositories.CarField
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
-
-private object FakeCars {
-  val fakeCars = List(
-    Car(0, "number1"),
-    Car(0, "number2", make = Some("Toyota"), manufacturingYear = Some(1999)),
-    Car(0, "number3", make = Some("Kia"), model = Some("Rio"), color = Some("Black"), manufacturingYear = Some(2010)),
-    Car(0, "number4", make = Some("Toyota"), model = Some("Corolla"), color = Some("Green"), manufacturingYear = Some(2001)),
-    Car(0, "number5", make = Some("Kia"), model = Some("Soul"), color = Some("White"), manufacturingYear = Some(2010)),
-    Car(0, "number6", make = Some("Honda"), model = Some("Civic"), color = Some("Green"), manufacturingYear = Some(2005))
-  )
-}
 
 class CarDAOSpec extends Specification {
   "CarDAO" should {
@@ -71,6 +60,7 @@ class CarDAOSpec extends Specification {
     val app2dao = Application.instanceCache[CarDAO]
     val dao: CarDAO = app2dao(app)
 
+    Await.result(dao.initSchema(), 1.seconds)
     val emptyStats = Await.result(dao.getStatistics, 1.second)
 
     emptyStats must equalTo(CarStatistics(0))
