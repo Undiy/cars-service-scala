@@ -81,7 +81,8 @@ class CarsController @Inject() (
         carRepository.add(newCar)
           .map(newId => Created(Json.toJson(newId)))
           .recover {
-            case ex: SQLException => if (ex.getMessage.contains("ERROR: duplicate key value violates unique constraint")) {
+            case ex: SQLException => if (ex.getMessage.contains("ERROR: duplicate key value violates unique constraint") ||
+              ex.getMessage.contains("Unique index or primary key violation")) {
               BadRequest(makeError(s"Car with registration number `${newCar.registrationNumber}` already exists"))
             } else {
               onError(ex)
@@ -100,7 +101,9 @@ class CarsController @Inject() (
       case Some(updatedCar) => carRepository.update(updatedCar)
         .map(if (_) NoContent else NotFound)
         .recover {
-          case ex: SQLException => if (ex.getMessage.contains("ERROR: duplicate key value violates unique constraint")) {
+          case ex: SQLException => if (ex.getMessage.contains("ERROR: duplicate key value violates unique constraint") ||
+            ex.getMessage.contains("Unique index or primary key violation")
+          ) {
             BadRequest(makeError(s"Car with registration number `${updatedCar.registrationNumber}` already exists"))
           } else {
             onError(ex)
